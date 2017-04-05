@@ -423,10 +423,17 @@ void loopcloser::calculate_orb_and_load_features(  cv::Mat &image,vector<cv::Mat
         int nFeatures = 1000;
         int sizePatch = 31;
 
-        cv::ORB orb(nFeatures,1.2,8,sizePatch,0,2,cv::ORB::HARRIS_SCORE,sizePatch);
         cv::Mat mask_orb;
+        #if CV_MAJOR_VERSION >= 3
+        cv::Ptr<cv::ORB> orb = cv::ORB::create(nFeatures,1.2,8,sizePatch,0,2,cv::ORB::HARRIS_SCORE,sizePatch);
+        orb->detectAndCompute(image_orb, mask_orb, keypoints_orb, descriptors_orb);
+        changeStructure_orb(descriptors_orb, features.back(), orb->descriptorSize());
+        #else
+        cv::ORB orb(nFeatures,1.2,8,sizePatch,0,2,cv::ORB::HARRIS_SCORE,sizePatch);
         orb(image_orb, mask_orb, keypoints_orb, descriptors_orb);
         changeStructure_orb(descriptors_orb, features.back(), orb.descriptorSize());
+        #endif
+
         features_back = features.back();
     }
 }
@@ -443,11 +450,18 @@ void loopcloser::calculate_orb_features(  cv::Mat &image,vector<cv::Mat> &featur
         features_aux.push_back(vector<cv::Mat>());
         int nFeatures = 1000;
         int sizePatch = 31;
-
-        cv::ORB orb(nFeatures,1.2,8,sizePatch,0,2,cv::ORB::HARRIS_SCORE,sizePatch);
         cv::Mat mask_orb;
+
+        #if CV_MAJOR_VERSION >= 3
+        cv::Ptr<cv::ORB> orb = cv::ORB::create(nFeatures,1.2,8,sizePatch,0,2,cv::ORB::HARRIS_SCORE,sizePatch);
+        orb->detectAndCompute(image_orb, mask_orb, keypoints_orb, descriptors_orb);
+        changeStructure_orb(descriptors_orb, features_aux.back(), orb->descriptorSize());
+        #else
+        cv::ORB orb(nFeatures,1.2,8,sizePatch,0,2,cv::ORB::HARRIS_SCORE,sizePatch);
         orb(image_orb, mask_orb, keypoints_orb, descriptors_orb);
         changeStructure_orb(descriptors_orb, features_aux.back(), orb.descriptorSize());
+        #endif
+
         features_back = features_aux.back();
     }
 }
@@ -1232,7 +1246,7 @@ void loopcloser::relocalization(cv::Mat &image,cv::Mat &R, cv::Mat &t, int &olde
             {
                 cv::Mat inliers;
 
-                cv::solvePnPRansac(points3D1,coordinates2,cameraMatrix,distCoeffs,r_pnp,t_pnp,false,100,2.0,100,inliers,cv::ITERATIVE);
+                cv::solvePnPRansac(points3D1,coordinates2,cameraMatrix,distCoeffs,r_pnp,t_pnp,false,100,2.0,100,inliers);
 
                 if(inliers.rows > 100 )
                 {
